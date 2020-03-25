@@ -1,0 +1,15 @@
+set -o errexit -o pipefail
+
+[[ ! -z "$TRACE" ]] && set -x
+
+export DOCKER_HOST=tcp://$DOCKER_HOST_ALIAS:2375
+
+CI_COMMIT_TAG="${CI_COMMIT_TAG:-}"
+
+if [[ -z "$CI_COMMIT_TAG" ]]; then
+  export CI_APPLICATION_REPOSITORY=$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG
+  export CI_APPLICATION_TAG=$CI_COMMIT_SHA
+else
+  export CI_APPLICATION_REPOSITORY=$CI_REGISTRY_IMAGE
+  export CI_APPLICATION_TAG=$CI_COMMIT_TAG
+fi
