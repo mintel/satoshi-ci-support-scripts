@@ -17,7 +17,7 @@ function install_cni() {
 function start_kind() {
   cat > /tmp/kind-config.yaml <<EOF
 kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
+apiVersion: kind.sigs.k8s.io/v1alpha3
 nodes:
 - role: control-plane
   image: kindest/node:${K8S_VERSION}
