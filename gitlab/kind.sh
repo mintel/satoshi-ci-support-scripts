@@ -47,6 +47,9 @@ EOF
 
   export KUBECONFIG="${HOME}/.kube/kind-config"
 
+  # Quick hack to see if slow CNI startup is causing pipeline failures
+  sleep 10
+
   kind "${KIND_OPTS}" create cluster --config /tmp/kind-config.yaml
 
   if [[ "$KIND_FIX_KUBECONFIG" == "true" ]]; then
