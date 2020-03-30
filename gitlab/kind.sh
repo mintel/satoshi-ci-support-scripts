@@ -45,13 +45,15 @@ EOF
 EOF
   fi
 
-  export KUBECONFIG="${HOME}/.kube/kind-config"
+  #export KUBECONFIG="${HOME}/.kube/kind-config"
 
   # Quick hack to see if slow CNI startup is causing pipeline failures
   #sleep 10
 
   #kind "${KIND_OPTS}" create cluster --config /tmp/kind-config.yaml
   kind create cluster --config /tmp/kind-config.yaml
+
+  export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
   if [[ "$KIND_FIX_KUBECONFIG" == "true" ]]; then
     sed -i -e "s/server: https:\/\/0\.0\.0\.0/server: https:\/\/$DOCKER_HOST_ALIAS/" "$KUBECONFIG"
