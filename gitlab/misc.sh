@@ -258,3 +258,9 @@ alpine_prepare_vault_job() {
   install_vault
   install_kustomize
 }
+
+alpine_prepare_pluto_job() {
+  alpine_install_pkg findutils coreutils
+
+  install_pluto
+}
