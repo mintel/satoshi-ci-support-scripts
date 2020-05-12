@@ -213,12 +213,10 @@ install_pluto() {
   echo "Installing Pluto ${PLUTO_VERSION}"
 
   wget -q https://github.com/FairwindsOps/pluto/releases/download/v${PLUTO_VERSION}/pluto_${PLUTO_VERSION}_linux_amd64.tar.gz -O /tmp/pluto.tar.gz
-  cd /tmp
-  echo "$PLUTO_SHA256  pluto.tar.gz" | sha256sum -c
-  tar zxvf pluto.tar.gz -C /tmp
-  mv pluto /usr/local/bin/pluto
-  chmod +x /usr/local/bin/pluto
-  rm -f pluto.tar.gz
+  echo "$PLUTO_SHA256 /tmp/pluto.tar.gz" | sha256sum -c
+  tar zxvf /tmp/pluto.tar.gz -C /tmp
+  install /tmp/pluto /usr/local/bin/pluto
+  rm -f /tmp/pluto.tar.gz
   cd $CI_PROJECT_DIR
 }
 
