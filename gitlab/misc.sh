@@ -31,7 +31,7 @@ function validate_schemas_opa() {
   local dir
   dir=${1-"environments"}
 
-  POLICICES_BRANCH=${POLICIES_BRANCH:-master}
+  POLICIES_BRANCH=${POLICIES_BRANCH:-master}
 
   git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${POLICIES_REPO}" -b $POLICIES_BRANCH /tmp/policies
 
