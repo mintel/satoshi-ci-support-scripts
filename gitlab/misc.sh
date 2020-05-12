@@ -46,6 +46,23 @@ function validate_schemas_opa() {
   done
 }
 
+function validate_schemas_pluto() {
+  local dir
+  dir=${1-"environments"}
+
+  PLUTO_K8S_VERSION="${PLUTO_K8S_VERSION:-1.16.0}"
+
+  for cluster in $(find $dir -type f -name kustomization.yaml -exec dirname {} \;)
+  do
+    echo "# ---------------------- #"
+    echo "# Validating Manifests with Pluto for Cluster $cluster #"
+    echo "# ---------------------- #"
+    render=$(mktemp tmp.XXXXXXXXXX.yaml)
+    kustomize build $cluster > $render
+    pluto detect $render --target-version "${PLUTO_K8S_VERSION}"
+  done
+}
+
 function check_flux_patch_destination() {
   files=$(git diff --name-only  "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"..."origin/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" | grep flux-patch.conf || true)
   for file in $files; do
@@ -184,6 +201,24 @@ install_vault() {
   unzip vault.zip -d /usr/local/bin
   chmod +x /usr/local/bin/vault
   rm -f vault.zip
+  cd $CI_PROJECT_DIR
+}
+
+install_pluto() {
+  if [ -z "$PLUTO_VERSION" ] || [ -z "$PLUTO_SHA256" ]; then
+    echo "PLUTO Vars are not defined"
+    exit 1
+  fi
+
+  echo "Installing Pluto ${PLUTO_VERSION}"
+
+  wget -q https://github.com/FairwindsOps/pluto/releases/download/v${PLUTO_VERSION}/pluto_${PLUTO_VERSION}_linux_amd64.tar.gz -O /tmp/pluto.tar.gz
+  cd /tmp
+  echo "$PLUTO_SHA256  pluto.tar.gz" | sha256sum -c
+  tar zxvf pluto.tar.gz
+  mv pluto /usr/local/bin/pluto
+  chmod +x /usr/local/bin/pluto
+  rm -f pluto.tar.gz
   cd $CI_PROJECT_DIR
 }
 
