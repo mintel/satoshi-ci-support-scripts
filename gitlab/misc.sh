@@ -215,7 +215,7 @@ install_pluto() {
   wget -q https://github.com/FairwindsOps/pluto/releases/download/v${PLUTO_VERSION}/pluto_${PLUTO_VERSION}_linux_amd64.tar.gz -O /tmp/pluto.tar.gz
   cd /tmp
   echo "$PLUTO_SHA256  pluto.tar.gz" | sha256sum -c
-  tar zxvf pluto.tar.gz
+  tar zxvf pluto.tar.gz -C /tmp
   mv pluto /usr/local/bin/pluto
   chmod +x /usr/local/bin/pluto
   rm -f pluto.tar.gz
