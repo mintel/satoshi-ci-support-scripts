@@ -260,7 +260,7 @@ alpine_prepare_vault_job() {
 }
 
 alpine_prepare_pluto_job() {
-  alpine_install_pkg findutils coreutils
+  alpine_install_pkg findutils git coreutils
 
   install_kustomize
   install_pluto
