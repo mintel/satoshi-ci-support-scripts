@@ -59,8 +59,9 @@ EOF
 
   $KUBECTL cluster-info
 
-  $KUBECTL -n kube-system rollout status deployment/coredns --timeout=180s
-  $KUBECTL -n kube-system rollout status daemonset/kube-proxy --timeout=180s
+  $KUBECTL -n kube-system rollout status daemonset/kindnet --timeout=300s
+  $KUBECTL -n kube-system rollout status deployment/coredns --timeout=300s
+  $KUBECTL -n kube-system rollout status daemonset/kube-proxy --timeout=300s
   $KUBECTL get pods --all-namespaces
 }
 
