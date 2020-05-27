@@ -280,6 +280,7 @@ alpine_prepare_pluto_job() {
 
   install_kustomize
   install_pluto
+}
 
 alpine_prepare_jsonnet_job() {
   alpine_install_pkg jsonnet make findutils bash
