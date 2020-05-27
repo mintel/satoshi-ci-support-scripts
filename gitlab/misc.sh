@@ -19,11 +19,19 @@ function validate_schemas_kubecfg() {
   for cluster in $(find $dir -type f -name kustomization.yaml -exec dirname {} \;)
   do
     echo "# ---------------------- #"
-    echo "# Validating Manifests with Kubecfg  for Cluster $cluster #"
+    echo "# Validating Kustomize with Kubecfg for Cluster $cluster #"
     echo "# ---------------------- #"
     render=$(mktemp tmp.XXXXXXXXXX.yaml)
     kustomize build $cluster > $render
     kubecfg validate $render
+  done
+
+  for config in $(find $dir -type f -name config.jsonnet)
+  do
+    echo "# ---------------------- #"
+    echo "# Validating Jsonnet with Kubecfg for Cluster $config #"
+    echo "# ---------------------- #"
+    kubecfg validate $config
   done
 }
 
@@ -42,6 +50,16 @@ function validate_schemas_opa() {
     echo "# ---------------------- #"
     render=$(mktemp tmp.XXXXXXXXXX.yaml)
     kustomize build $cluster > $render
+    conftest test $render -p /tmp/policies/opa/kustomize/policy
+  done
+
+  for config in $(find $dir -type f -name config.jsonnet)
+  do
+    echo "# ---------------------- #"
+    echo "# Testing OPA for Cluster $config #"
+    echo "# ---------------------- #"
+    render=$(mktemp tmp.XXXXXXXXXX.yaml)
+    kubecfg show $config > $render
     conftest test $render -p /tmp/policies/opa/kustomize/policy
   done
 }
@@ -262,4 +280,28 @@ alpine_prepare_pluto_job() {
 
   install_kustomize
   install_pluto
+
+alpine_prepare_jsonnet_job() {
+  alpine_install_pkg jsonnet make findutils bash
+}
+
+alpine_prepare_k8sbootstrap_golden_diff() {
+  alpine_install_pkg make git bash
+
+  install_kubecfg
+}
+
+alpine_prepare_k8sbootstrap_kind_job() {
+  alpine_install_pkg docker-cli coreutils git
+
+  install_kind
+  install_kubectl
+  install_kubecfg
+}
+
+alpine_prepare_k8sbootstrap_opa_job() {
+  alpine_install_pkg findutils git coreutils
+
+  install_conftest
+  install_kubecfg
 }
