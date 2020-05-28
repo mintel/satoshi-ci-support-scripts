@@ -48,7 +48,7 @@ function validate_schemas_opa() {
     echo "# ---------------------- #"
     echo "# Testing OPA for Cluster $cluster #"
     echo "# ---------------------- #"
-    conftest test $cluster -p /tmp/policies/opa/kustomize/policy
+    conftest test $cluster/* -p /tmp/policies/opa/kustomize/policy --combine
   done
 }
 
