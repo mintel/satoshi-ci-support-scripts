@@ -43,24 +43,12 @@ function validate_schemas_opa() {
 
   git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${POLICIES_REPO}" -b $POLICIES_BRANCH /tmp/policies
 
-  for cluster in $(find $dir -type f -name kustomization.yaml -exec dirname {} \; | grep -vE "bases|local")
+  for cluster in $(find $dir -type d -links 2 | grep -vE "bases|local")
   do
     echo "# ---------------------- #"
     echo "# Testing OPA for Cluster $cluster #"
     echo "# ---------------------- #"
-    render=$(mktemp tmp.XXXXXXXXXX.yaml)
-    kustomize build $cluster > $render
-    conftest test $render -p /tmp/policies/opa/kustomize/policy
-  done
-
-  for config in $(find $dir -type f -name config.jsonnet)
-  do
-    echo "# ---------------------- #"
-    echo "# Testing OPA for Cluster $config #"
-    echo "# ---------------------- #"
-    render=$(mktemp tmp.XXXXXXXXXX.yaml)
-    kubecfg show $config > $render
-    conftest test $render -p /tmp/policies/opa/kustomize/policy
+    conftest test $cluster -p /tmp/policies/opa/kustomize/policy
   done
 }
 
@@ -241,7 +229,6 @@ alpine_install_pkg() {
 }
 
 alpine_prepare_golden_diff() {
-
   alpine_install_pkg git make bash findutils
 
   install_kustomize
@@ -262,7 +249,6 @@ alpine_prepare_opa_job() {
   alpine_install_pkg findutils git coreutils
 
   install_conftest
-  install_kustomize
 }
 
 alpine_prepare_vault_job() {
@@ -275,7 +261,7 @@ alpine_prepare_vault_job() {
 
 alpine_prepare_pluto_job() {
   alpine_install_pkg findutils git coreutils libc6-compat
-  
+
   install_pluto
 }
 
