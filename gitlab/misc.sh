@@ -37,7 +37,7 @@ function validate_schemas_kubecfg() {
 
 function validate_schemas_opa() {
   local dir
-  dir=${1-"environments"}
+  dir=${1-"rendered"}
 
   POLICIES_BRANCH=${POLICIES_BRANCH:-master}
 
