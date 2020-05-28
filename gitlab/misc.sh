@@ -14,24 +14,14 @@ function load_ssh_agent() {
 
 function validate_schemas_kubecfg() {
   local dir
-  dir=${1-"environments"}
+  dir=${1-"rendered"}
 
-  for cluster in $(find $dir -type f -name kustomization.yaml -exec dirname {} \;)
+  for cluster in $(find $dir -type d -links 2)
   do
     echo "# ---------------------- #"
     echo "# Validating Kustomize with Kubecfg for Cluster $cluster #"
     echo "# ---------------------- #"
-    render=$(mktemp tmp.XXXXXXXXXX.yaml)
-    kustomize build $cluster > $render
-    kubecfg validate $render
-  done
-
-  for config in $(find $dir -type f -name config.jsonnet)
-  do
-    echo "# ---------------------- #"
-    echo "# Validating Jsonnet with Kubecfg for Cluster $config #"
-    echo "# ---------------------- #"
-    kubecfg validate $config
+    kubecfg validate $(ls $cluster/* | egrep ".yaml|.yml")
   done
 }
 
@@ -242,7 +232,6 @@ alpine_prepare_kind_job() {
   install_kind
   install_kubectl
   install_kubecfg
-  install_kustomize
 }
 
 alpine_prepare_opa_job() {
