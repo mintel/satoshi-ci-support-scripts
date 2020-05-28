@@ -66,18 +66,16 @@ function validate_schemas_opa() {
 
 function validate_schemas_pluto() {
   local dir
-  dir=${1-"environments"}
+  dir=${1-"rendered"}
 
   PLUTO_K8S_VERSION="${PLUTO_K8S_VERSION:-1.16.0}"
 
-  for cluster in $(find $dir -type f -name kustomization.yaml -exec dirname {} \;)
+  for cluster in $(find $dir -type d -links 2)
   do
     echo "# ---------------------- #"
     echo "# Validating Manifests with Pluto for Cluster $cluster #"
     echo "# ---------------------- #"
-    render=$(mktemp tmp.XXXXXXXXXX.yaml)
-    kustomize build $cluster > $render
-    pluto detect $render --target-version "${PLUTO_K8S_VERSION}"
+    pluto detect-files $render --target-version "${PLUTO_K8S_VERSION}"
   done
 }
 
@@ -277,8 +275,7 @@ alpine_prepare_vault_job() {
 
 alpine_prepare_pluto_job() {
   alpine_install_pkg findutils git coreutils libc6-compat
-
-  install_kustomize
+  
   install_pluto
 }
 
