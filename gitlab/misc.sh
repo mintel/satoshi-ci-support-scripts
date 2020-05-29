@@ -57,7 +57,6 @@ function validate_schemas_opa() {
     conftest test $cluster -p /tmp/policies/opa/kustomize/policy
   done
 }
-}
 
 function validate_schemas_pluto() {
   local dir
