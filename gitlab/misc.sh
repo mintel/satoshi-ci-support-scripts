@@ -16,20 +16,14 @@ function validate_schemas_kubecfg() {
   local dir
   dir=${1-"rendered"}
 
-  for cluster in $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;)
+  for cluster in \
+    $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;) \
+    $(find $dir -type f -name config.yaml -exec dirname {} \;)
   do
     echo "# ---------------------- #"
     echo "# Validating Kustomize with Kubecfg for Cluster $cluster #"
     echo "# ---------------------- #"
     kubecfg validate $(ls $cluster/* | egrep ".yaml|.yml")
-  done
-
-  for cluster in $(find $dir -type f -name config.yaml -exec dirname {} \;)
-  do
-    echo "# ---------------------- #"
-    echo "# Validating Kustomize with Kubecfg for Cluster $cluster #"
-    echo "# ---------------------- #"
-    kubecfg validate $cluster/*
   done
 }
 
@@ -41,15 +35,9 @@ function validate_schemas_opa() {
 
   git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${POLICIES_REPO}" -b $POLICIES_BRANCH /tmp/policies
 
-  for cluster in $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;)
-  do
-    echo "# ---------------------- #"
-    echo "# Testing OPA for Cluster $cluster #"
-    echo "# ---------------------- #"
-    conftest test $cluster -p /tmp/policies/opa/kustomize/policy
-  done
-
-  for cluster in $(find $dir -type f -name config.yaml -exec dirname {} \;)
+  for cluster in \
+    $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;) \
+    $(find $dir -type f -name config.yaml -exec dirname {} \;)
   do
     echo "# ---------------------- #"
     echo "# Testing OPA for Cluster $cluster #"
@@ -64,15 +52,9 @@ function validate_schemas_pluto() {
 
   PLUTO_K8S_VERSION="${PLUTO_K8S_VERSION:-1.16.0}"
 
-  for cluster in $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;)
-  do
-    echo "# ---------------------- #"
-    echo "# Validating Manifests with Pluto for Cluster $cluster #"
-    echo "# ---------------------- #"
-    pluto detect-files $cluster --target-version "${PLUTO_K8S_VERSION}"
-  done
-
-  for cluster in $(find $dir -type f -name config.yaml -exec dirname {} \;)
+  for cluster in \
+    $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;) \
+    $(find $dir -type f -name config.yaml -exec dirname {} \;)
   do
     echo "# ---------------------- #"
     echo "# Validating Manifests with Pluto for Cluster $cluster #"
