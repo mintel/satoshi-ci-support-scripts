@@ -14,53 +14,52 @@ function load_ssh_agent() {
 
 function validate_schemas_kubecfg() {
   local dir
-  dir=${1-"environments"}
+  dir=${1-"rendered"}
 
-  for cluster in $(find $dir -type f -name kustomization.yaml -exec dirname {} \;)
+  for cluster in \
+    $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;) \
+    $(find $dir -type f -name config.yaml -exec dirname {} \;)
   do
     echo "# ---------------------- #"
     echo "# Validating Kustomize with Kubecfg for Cluster $cluster #"
     echo "# ---------------------- #"
-    render=$(mktemp tmp.XXXXXXXXXX.yaml)
-    kustomize build $cluster > $render
-    kubecfg validate $render
-  done
-
-  for config in $(find $dir -type f -name config.jsonnet)
-  do
-    echo "# ---------------------- #"
-    echo "# Validating Jsonnet with Kubecfg for Cluster $config #"
-    echo "# ---------------------- #"
-    kubecfg validate $config
+    kubecfg validate $(ls $cluster/* | egrep ".yaml|.yml")
   done
 }
 
 function validate_schemas_opa() {
   local dir
-  dir=${1-"environments"}
+  dir=${1-"rendered"}
 
   POLICIES_BRANCH=${POLICIES_BRANCH:-master}
 
   git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${POLICIES_REPO}" -b $POLICIES_BRANCH /tmp/policies
 
-  for cluster in $(find $dir -type f -name kustomization.yaml -exec dirname {} \; | grep -vE "bases|local")
+  for cluster in \
+    $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;) \
+    $(find $dir -type f -name config.yaml -exec dirname {} \;)
   do
     echo "# ---------------------- #"
     echo "# Testing OPA for Cluster $cluster #"
     echo "# ---------------------- #"
-    render=$(mktemp tmp.XXXXXXXXXX.yaml)
-    kustomize build $cluster > $render
-    conftest test $render -p /tmp/policies/opa/kustomize/policy
+    conftest test $cluster -p /tmp/policies/opa/kustomize/policy
   done
+}
 
-  for config in $(find $dir -type f -name config.jsonnet)
+function validate_schemas_pluto() {
+  local dir
+  dir=${1-"rendered"}
+
+  PLUTO_K8S_VERSION="${PLUTO_K8S_VERSION:-1.16.0}"
+
+  for cluster in \
+    $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;) \
+    $(find $dir -type f -name config.yaml -exec dirname {} \;)
   do
     echo "# ---------------------- #"
-    echo "# Testing OPA for Cluster $config #"
+    echo "# Validating Manifests with Pluto for Cluster $cluster #"
     echo "# ---------------------- #"
-    render=$(mktemp tmp.XXXXXXXXXX.yaml)
-    kubecfg show $config > $render
-    conftest test $render -p /tmp/policies/opa/kustomize/policy
+    pluto detect-files $cluster --target-version "${PLUTO_K8S_VERSION}"
   done
 }
 
@@ -205,12 +204,27 @@ install_vault() {
   cd $CI_PROJECT_DIR
 }
 
+install_pluto() {
+  if [ -z "$PLUTO_VERSION" ] || [ -z "$PLUTO_SHA256" ]; then
+    echo "PLUTO Vars are not defined"
+    exit 1
+  fi
+
+  echo "Installing Pluto ${PLUTO_VERSION}"
+
+  wget -q https://github.com/FairwindsOps/pluto/releases/download/v${PLUTO_VERSION}/pluto_${PLUTO_VERSION}_linux_amd64.tar.gz -O /tmp/pluto.tar.gz
+  echo "$PLUTO_SHA256 /tmp/pluto.tar.gz" | sha256sum -c
+  tar zxvf /tmp/pluto.tar.gz -C /tmp
+  install /tmp/pluto /usr/local/bin/pluto
+  rm -f /tmp/pluto.tar.gz
+  cd $CI_PROJECT_DIR
+}
+
 alpine_install_pkg() {
   apk add --no-cache $@
 }
 
 alpine_prepare_golden_diff() {
-
   alpine_install_pkg git make bash findutils
 
   install_kustomize
@@ -224,14 +238,12 @@ alpine_prepare_kind_job() {
   install_kind
   install_kubectl
   install_kubecfg
-  install_kustomize
 }
 
 alpine_prepare_opa_job() {
   alpine_install_pkg findutils git coreutils
 
   install_conftest
-  install_kustomize
 }
 
 alpine_prepare_vault_job() {
@@ -240,6 +252,12 @@ alpine_prepare_vault_job() {
   install_golang_yq
   install_vault
   install_kustomize
+}
+
+alpine_prepare_pluto_job() {
+  alpine_install_pkg findutils git coreutils libc6-compat
+
+  install_pluto
 }
 
 alpine_prepare_jsonnet_job() {
