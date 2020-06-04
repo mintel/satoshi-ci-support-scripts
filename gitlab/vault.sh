@@ -38,13 +38,13 @@ function extract_vault_configs_from_manifests {
 
       name=$(yq read -d $DOC $file metadata.name)
       namespace=$(yq read -d $DOC $file metadata.namespace)
-      data=$(yq read -d $DOC $file 'data."vault-config.yml"')
+      data=$(yq read -d $DOC $file 'data."vault-config.yml"' | base64 -w0)
 
       file_name="${namespace}_${name}.yaml"
 
       [[ $kind == "SealedSecret" ]] && echo "EXCLUDING: $namespace-$name - SealedSecret" && continue
       [[ $skip_ci == "true" ]] && echo "EXLCUDING: $namespace-$name - skip-ci annotation" && continue
-      [[ $data == "null" ]] && echo "EXLCUDING: $namespace-$name - not a vault-config.yml key" && continue
+      [[ $data == "bnVsbAo=" ]] && echo "EXLCUDING: $namespace-$name - not a vault-config.yml key" && continue
 
       if [[ $kind == "ConfigMap" ]]; then
         yq read -d $DOC $file 'data."vault-config.yml"' > $CONFS_DIR/$env/yamls/${file_name}
