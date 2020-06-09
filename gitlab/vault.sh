@@ -7,16 +7,13 @@ BANK_VAULTS_IMAGE="${BANK_VAULTS_IMAGE:-banzaicloud/bank-vaults}"
 BANK_VAULTS_VERSION="${BANK_VAULTS_VERSION:-0.9.0}"
 #GITOPS_CI_CONTAINER_IMAGE="${GITOPS_CI_CONTAINER_IMAGE:-mintel/satoshi-gitops-ci}"
 #GITOPS_CI_CONTAINER_VERSION="${GITOPS_CI_CONTAINER_VERSION:-0.9.0}"
-POLICIES_DIR="${POLICIES_DIR}"
 
 CONFS_DIR="/tmp/confs"
-
-[[ -z $POLICIES_DIR ]] && ( printf "\n\nPOLICIES_DIR Undefined\n" && exit 1 )
 
 function extract_vault_configs_from_manifests {
   mkdir -p $CONFS_DIR
 
-  for file in $(grep -l rendered/environments/$ENV/vault/ConfigMap*); do
+  for file in $(grep -l vault-configurator ${CI_PROJECT_DIR}/rendered/environments/$ENV/vault/ConfigMap*); do
     skip_ci=$(yq read $file 'metadata.annotations."mintel.com/skip-local-ci"')
     [[ $skip_ci == "true" ]] && echo "EXLCUDING: $file - skip-ci annotation" && continue
 
@@ -33,7 +30,7 @@ function build_bank_vaults_configs_list {
   local CONFS_STRING=""
 
   for file in `ls $CONFS_DIR`; do
-    CONFS_STRING="${CONFS_STRING}--vault-config-file=$CONFS_DIR/$e/yamls/${file} "
+    CONFS_STRING="${CONFS_STRING}--vault-config-file=$CONFS_DIR/${file} "
   done
 
   echo $CONFS_STRING
