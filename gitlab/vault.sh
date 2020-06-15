@@ -13,16 +13,25 @@ CONFS_DIR="/tmp/confs"
 function extract_vault_configs_from_manifests {
   mkdir -p $CONFS_DIR
 
-  for file in $(grep -l vault-configurator ${CI_PROJECT_DIR}/rendered/environments/$ENV/vault/ConfigMap*); do
+  env_dir="${CI_PROJECT_DIR}/rendered/environments/$ENV/vault"
+  configmaps=$(grep -l "app: vault-configurator" $env_dir/ConfigMap* || true)
+  secrets=$(grep -l "app:vault-configurator" $env_dir/Secret* || true)
+
+  for file in $configmaps $secrets; do
     skip_ci=$(yq read $file 'metadata.annotations."mintel.com/skip-local-ci"')
     [[ $skip_ci == "true" ]] && echo "EXLCUDING: $file - skip-ci annotation" && continue
-
 
     data=$(yq read $file 'data."vault-config.yml"' | base64 -w0)
     [[ $data == "bnVsbAo=" ]] && echo "EXLCUDING: $file - not a vault-config.yml key" && continue
 
+    kind=$(yq read $file 'kind')
     name=$(basename $file)
-    yq read $file 'data."vault-config.yml"' > $CONFS_DIR/$name
+
+    if [[ $kind == "ConfigMap" ]]; then
+      yq read $file 'data."vault-config.yml"' > $CONFS_DIR/$name
+    elif [[ $kind == "Secret" ]]; then
+      yq read $file 'data."vault-config.yml"' | base64 -d > $CONFS_DIR/$name
+    fi
   done
 }
 
