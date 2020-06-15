@@ -7,61 +7,39 @@ BANK_VAULTS_IMAGE="${BANK_VAULTS_IMAGE:-banzaicloud/bank-vaults}"
 BANK_VAULTS_VERSION="${BANK_VAULTS_VERSION:-0.9.0}"
 #GITOPS_CI_CONTAINER_IMAGE="${GITOPS_CI_CONTAINER_IMAGE:-mintel/satoshi-gitops-ci}"
 #GITOPS_CI_CONTAINER_VERSION="${GITOPS_CI_CONTAINER_VERSION:-0.9.0}"
-POLICIES_DIR="${POLICIES_DIR}"
 
 CONFS_DIR="/tmp/confs"
-
-[[ -z $POLICIES_DIR ]] && ( printf "\n\nPOLICIES_DIR Undefined\n" && exit 1 )
 
 function extract_vault_configs_from_manifests {
   mkdir -p $CONFS_DIR
 
-  # render all kustomize policies
+  env_dir="${CI_PROJECT_DIR}/rendered/environments/$ENV/vault"
+  configmaps=$(grep -l "app: vault-configurator" $env_dir/ConfigMap* || true)
+  secrets=$(grep -l "app:vault-configurator" $env_dir/Secret* || true)
 
-  #for k in $(find $POLICIES_DIR -type f -name kustomization.yaml); do
-  for k in $(find $POLICIES_DIR/$ENV -type f -name kustomization.yaml); do
-    env="$(dirname $k | rev | cut -d/ -f1 | rev)"
+  for file in $configmaps $secrets; do
+    skip_ci=$(yq read $file 'metadata.annotations."mintel.com/skip-local-ci"')
+    [[ $skip_ci == "true" ]] && echo "EXLCUDING: $file - skip-ci annotation" && continue
 
-    mkdir -p $CONFS_DIR/$env/kustomize
-    mkdir -p $CONFS_DIR/$env/yamls
-    kustomize build $(dirname $k) > $CONFS_DIR/$env/kustomize/manifests.yaml
+    data=$(yq read $file 'data."vault-config.yml"' | base64 -w0)
+    [[ $data == "bnVsbAo=" ]] && echo "EXLCUDING: $file - not a vault-config.yml key" && continue
 
-    file=$CONFS_DIR/$env/kustomize/manifests.yaml
-    N_DOCS=$(cat $file | egrep ^kind | wc -l)
+    kind=$(yq read $file 'kind')
+    name=$(basename $file)
 
-    let N_DOCS-=1
-
-    for DOC in `seq 0 $N_DOCS`
-    do
-      kind=$(yq read -d $DOC $file kind)
-      skip_ci=$(yq read -d $DOC $file 'metadata.annotations."mintel.com/skip-local-ci"')
-
-      name=$(yq read -d $DOC $file metadata.name)
-      namespace=$(yq read -d $DOC $file metadata.namespace)
-      data=$(yq read -d $DOC $file 'data."vault-config.yml"' | base64 -w0)
-
-      file_name="${namespace}_${name}.yaml"
-
-      [[ $kind == "SealedSecret" ]] && echo "EXCLUDING: $namespace-$name - SealedSecret" && continue
-      [[ $skip_ci == "true" ]] && echo "EXLCUDING: $namespace-$name - skip-ci annotation" && continue
-      [[ $data == "bnVsbAo=" ]] && echo "EXLCUDING: $namespace-$name - not a vault-config.yml key" && continue
-
-      if [[ $kind == "ConfigMap" ]]; then
-        yq read -d $DOC $file 'data."vault-config.yml"' > $CONFS_DIR/$env/yamls/${file_name}
-      elif [[ $kind == "Secret" ]]; then
-        yq read -d $DOC $file 'data."vault-config.yml"' | base64 -d > $CONFS_DIR/$env/yamls/${file_name}
-      fi
-    done
-
+    if [[ $kind == "ConfigMap" ]]; then
+      yq read $file 'data."vault-config.yml"' > $CONFS_DIR/$name
+    elif [[ $kind == "Secret" ]]; then
+      yq read $file 'data."vault-config.yml"' | base64 -d > $CONFS_DIR/$name
+    fi
   done
 }
 
 function build_bank_vaults_configs_list {
-  local e=$1
   local CONFS_STRING=""
 
-  for file in `ls -1 $CONFS_DIR/$e/yamls`; do
-    CONFS_STRING="${CONFS_STRING}--vault-config-file=$CONFS_DIR/$e/yamls/${file} "
+  for file in `ls $CONFS_DIR`; do
+    CONFS_STRING="${CONFS_STRING}--vault-config-file=$CONFS_DIR/${file} "
   done
 
   echo $CONFS_STRING
@@ -86,7 +64,7 @@ function check_vault_policies() {
 
   printf "\n## Starting Configurator ##\n"
   local CONFS
-  CONFS=$(build_bank_vaults_configs_list $env)
+  CONFS=$(build_bank_vaults_configs_list)
 
   bank-vaults configure --once --fatal --mode dev $CONFS
 
