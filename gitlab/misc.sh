@@ -177,7 +177,7 @@ install_conftest() {
 
   echo "Installing ConfTest ${CONFTEST_VERSION}"
 
-  wget -q https://github.com/instrumenta/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz -O /tmp/conftest.tar.gz
+  wget -q https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz -O /tmp/conftest.tar.gz
   cd /tmp
   echo "$CONFTEST_SHA256  conftest.tar.gz" | sha256sum -c
   tar zxvf /tmp/conftest.tar.gz  -C /tmp
