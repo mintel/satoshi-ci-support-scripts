@@ -59,7 +59,7 @@ function validate_schemas_pluto() {
     echo "# ---------------------- #"
     echo "# Validating Manifests with Pluto for Cluster $cluster #"
     echo "# ---------------------- #"
-    pluto detect-files $cluster --target-version "${PLUTO_K8S_VERSION}"
+    pluto detect-files -d $cluster --target-version "k8s=v${PLUTO_K8S_VERSION}" -o wide
   done
 }
 
