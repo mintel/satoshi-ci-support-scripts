@@ -62,9 +62,8 @@ function validate_schemas_pluto() {
     echo "# Validating Manifests with Pluto for Cluster $cluster #"
     echo "# ---------------------- #"
     if ! pluto detect-files -d $cluster --target-versions "k8s=v${PLUTO_K8S_VERSION}" -o wide ; then
-      rc=$?
-    else
-      echo "TEST"
+      echo "# FAILED #"
+      rc=1
     fi
   done
 
