@@ -65,6 +65,7 @@ function validate_schemas_pluto() {
       rc=$?
     fi
   done
+
   exit $rc
 }
 
