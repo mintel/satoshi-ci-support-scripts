@@ -52,6 +52,8 @@ function validate_schemas_pluto() {
 
   PLUTO_K8S_VERSION="${PLUTO_K8S_VERSION:-1.16.0}"
 
+  rc=0
+
   for cluster in \
     $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;) \
     $(find $dir -type f -name config.yaml -exec dirname {} \;)
@@ -59,8 +61,11 @@ function validate_schemas_pluto() {
     echo "# ---------------------- #"
     echo "# Validating Manifests with Pluto for Cluster $cluster #"
     echo "# ---------------------- #"
-    pluto detect-files -d $cluster --target-versions "k8s=v${PLUTO_K8S_VERSION}" -o wide
+    if ! pluto detect-files -d $cluster --target-versions "k8s=v${PLUTO_K8S_VERSION}" -o wide ; then
+      rc=$?
+    fi
   done
+  exit $rc
 }
 
 function check_flux_patch_destination() {
