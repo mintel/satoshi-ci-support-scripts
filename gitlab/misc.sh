@@ -3,13 +3,11 @@
 [[ -n "$TRACE" ]] && set -x
 
 function load_ssh_agent() {
-  # An example of how we could add a deploy key if required
-  # eval $(ssh-agent -s)
-  # echo "$DEPLOY_KEY_B64_EXAMPLE " | base64 -d | tr -d '\r' | ssh-add - > /dev/null
-  # mkdir -p ~/.ssh
-  # chmod 700 ~/.ssh
-  # ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
-  true
+  eval $(ssh-agent -s)
+  echo "$DEPLOY_KEY_B64" | base64 -d | tr -d '\r' | ssh-add - > /dev/null
+  mkdir -p ~/.ssh
+  chmod 700 ~/.ssh
+  ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
 }
 
 function validate_schemas_kubecfg() {
