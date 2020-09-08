@@ -2,6 +2,10 @@
 
 [[ -n "$TRACE" ]] && set -x
 
+function alpine_prepare_ssh_agent() {
+  alpine_install_pkg git openssh-client
+}
+
 function load_ssh_agent() {
   eval $(ssh-agent -s)
   echo "$SATOSHI_REMOTE_IMPORT_KEY" | base64 -d | tr -d '\r' | ssh-add - > /dev/null
