@@ -53,6 +53,7 @@ function validate_schemas_pluto() {
   dir=${1-"rendered"}
 
   PLUTO_K8S_VERSION="${PLUTO_K8S_VERSION:-1.16.0}"
+  PLUTO_DEPRECATION_SKIP="${PLUTO_DEPRECATION_SKIP}"
 
   rc=0
 
@@ -63,7 +64,7 @@ function validate_schemas_pluto() {
     echo "# ---------------------- #"
     echo "# Validating Manifests with Pluto for Cluster $cluster #"
     echo "# ---------------------- #"
-    if ! pluto detect-files -d $cluster --target-versions "k8s=v${PLUTO_K8S_VERSION}" -o wide ; then
+    if ! pluto detect-files -d $cluster --target-versions "k8s=v${PLUTO_K8S_VERSION}" ${PLUTO_DEPRECATION_SKIP} -o wide ; then
       echo "# FAILED #"
       rc=1
     fi
