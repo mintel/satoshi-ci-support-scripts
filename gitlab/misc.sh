@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 [[ -n "$TRACE" ]] && set -x
 
@@ -33,18 +33,18 @@ function validate_schemas_opa() {
   local dir
   dir=${1-"rendered"}
 
-  POLICIES_BRANCH=${POLICIES_BRANCH:-master}
+  POLICIES_BRANCH=${POLICIES_BRANCH:-main}
 
-  git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${POLICIES_REPO}" -b $POLICIES_BRANCH /tmp/policies
+  git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${POLICIES_REPO}" -b "$POLICIES_BRANCH" /tmp/policies
 
   for cluster in \
-    $(find $dir -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;) \
-    $(find $dir -type f -name config.yaml -exec dirname {} \;)
+    $(find "$dir" -type f -name ClusterIssuer-selfsigning-issuer.yaml -exec dirname {} \;) \
+    $(find "$dir" -type f -name config.yaml -exec dirname {} \;)
   do
     echo "# ---------------------- #"
     echo "# Testing OPA for Cluster $cluster #"
     echo "# ---------------------- #"
-    conftest test $cluster -p /tmp/policies/opa/kustomize/policy
+    conftest test "$cluster" -p /tmp/policies/opa/kustomize/policy
   done
 }
 
